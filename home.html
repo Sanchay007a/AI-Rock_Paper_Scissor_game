@@ -1,0 +1,1015 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Bayesian RPS</title>
+
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+
+        body {
+
+            min-height: 100vh;
+
+            background:
+                radial-gradient(
+                    circle at 50% 40%,
+                    rgba(0, 255, 120, 0.08),
+                    transparent 35%
+                ),
+                #020504;
+
+            color: #d9ffe9;
+
+            font-family:
+                "Segoe UI",
+                Arial,
+                sans-serif;
+
+            overflow: hidden;
+        }
+
+
+        .game-screen {
+
+            width: 100vw;
+            height: 100vh;
+
+            display: flex;
+
+        }
+
+
+        .game-area {
+
+            flex: 1;
+
+            position: relative;
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding-right: 150px;
+
+        }
+
+
+        .title {
+
+            position: absolute;
+
+            top: 35px;
+            left: 45px;
+
+            font-size: 25px;
+
+            letter-spacing: 6px;
+
+            font-weight: 500;
+
+        }
+
+
+        .title span {
+
+            color: #00ff88;
+
+            text-shadow:
+                0 0 10px
+                rgba(0,255,136,0.7);
+
+        }
+
+
+        .label {
+
+            font-size: 13px;
+
+            letter-spacing: 5px;
+
+            color: #38d982;
+
+            margin-bottom: 15px;
+
+        }
+
+
+        .computer-section {
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+        }
+
+
+        .computer-hand {
+
+            width: 210px;
+            height: 150px;
+
+            border:
+                1px solid
+                rgba(0,255,136,0.35);
+
+            border-radius: 50%;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(0,255,136,0.13),
+                    rgba(0,0,0,0.2) 65%
+                );
+
+            box-shadow:
+                0 0 30px
+                rgba(0,255,136,0.08),
+
+                inset 0 0 35px
+                rgba(0,255,136,0.06);
+
+        }
+
+
+        .hand-icon {
+
+            font-size: 82px;
+
+            filter:
+                drop-shadow(
+                    0 0 15px
+                    rgba(0,255,136,0.45)
+                );
+
+        }
+
+
+        .vs {
+
+            margin: 22px 0;
+
+            font-size: 42px;
+
+            font-weight: 700;
+
+            font-style: italic;
+
+            color: #00ff88;
+
+            letter-spacing: 5px;
+
+            text-shadow:
+                0 0 8px #00ff88,
+                0 0 25px
+                rgba(0,255,136,0.5);
+
+        }
+
+
+        .player-section {
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+        }
+
+
+        .choices {
+
+            display: flex;
+
+            gap: 25px;
+
+            margin-top: 10px;
+
+        }
+
+
+        .choice {
+
+            width: 165px;
+            height: 145px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(0,255,136,0.045),
+                    rgba(0,0,0,0.5)
+                );
+
+            border:
+                1px solid
+                rgba(0,255,136,0.3);
+
+            color: #caffdf;
+
+            cursor: pointer;
+
+            display: flex;
+
+            flex-direction: column;
+
+            justify-content: center;
+
+            align-items: center;
+
+            gap: 10px;
+
+            clip-path: polygon(
+                12px 0,
+                calc(100% - 12px) 0,
+                100% 12px,
+                100% calc(100% - 12px),
+                calc(100% - 12px) 100%,
+                12px 100%,
+                0 calc(100% - 12px),
+                0 12px
+            );
+
+            transition: 0.25s;
+
+        }
+
+
+        .choice:hover {
+
+            transform: translateY(-8px);
+
+            border-color: #00ff88;
+
+            background:
+                rgba(0,255,136,0.08);
+
+            box-shadow:
+                0 0 30px
+                rgba(0,255,136,0.12);
+
+        }
+
+
+        .choice:active {
+
+            transform: scale(0.95);
+
+        }
+
+
+        .choice-icon {
+
+            font-size: 55px;
+
+        }
+
+
+        .choice-name {
+
+            font-size: 13px;
+
+            letter-spacing: 3px;
+
+            color: #65e99c;
+
+        }
+
+
+        /* =========================================
+           SIDEBAR
+        ========================================= */
+
+        .sidebar {
+
+            width: 175px;
+            height: 100vh;
+
+            border-left:
+                1px solid
+                rgba(0,255,136,0.22);
+
+            background:
+                linear-gradient(
+                    180deg,
+                    rgba(0,255,136,0.025),
+                    rgba(0,0,0,0.35)
+                );
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 20px;
+
+        }
+
+
+        /* =========================================
+           SCORE
+        ========================================= */
+
+        .score-board {
+
+            width: 135px;
+
+            padding: 18px 12px;
+
+            border:
+                1px solid
+                rgba(0,255,136,0.28);
+
+            background:
+                rgba(0,255,136,0.025);
+
+            text-align: center;
+
+        }
+
+
+        .score-title {
+
+            font-size: 10px;
+
+            letter-spacing: 3px;
+
+            color: #48df8b;
+
+            margin-bottom: 15px;
+
+        }
+
+
+        .score-labels {
+
+            display: flex;
+
+            justify-content: space-around;
+
+            color: #62c98c;
+
+            font-size: 9px;
+
+            margin-bottom: 5px;
+
+        }
+
+
+        .score-values {
+
+            display: flex;
+
+            justify-content: space-around;
+
+            align-items: center;
+
+        }
+
+
+        .score-number {
+
+            font-size: 27px;
+
+            font-weight: 600;
+
+            color: #d8ffe7;
+
+        }
+
+
+        .score-divider {
+
+            color: #00ff88;
+
+        }
+
+
+        /* =========================================
+           SIDEBAR BUTTONS
+        ========================================= */
+
+        .side-button {
+
+            width: 120px;
+            height: 105px;
+
+            background:
+                rgba(0,255,136,0.025);
+
+            border:
+                1px solid
+                rgba(0,255,136,0.25);
+
+            color: #76f3a8;
+
+            cursor: pointer;
+
+            display: flex;
+
+            flex-direction: column;
+
+            justify-content: center;
+
+            align-items: center;
+
+            gap: 12px;
+
+            transition: 0.3s;
+
+        }
+
+
+        .side-button:hover {
+
+            border-color: #00ff88;
+
+            color: #00ff88;
+
+            background:
+                rgba(0,255,136,0.07);
+
+            box-shadow:
+                0 0 25px
+                rgba(0,255,136,0.12);
+
+            transform: translateX(-4px);
+
+        }
+
+
+        .side-icon {
+
+            font-size: 28px;
+
+        }
+
+
+        .side-text {
+
+            font-size: 10px;
+
+            letter-spacing: 2px;
+
+        }
+
+
+        /* =========================================
+           ANIMATION
+        ========================================= */
+
+        .thinking {
+
+            animation:
+                pulseHand
+                0.6s
+                ease-in-out;
+
+        }
+
+
+        @keyframes pulseHand {
+
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+
+                transform: scale(1.12);
+
+                filter:
+                    drop-shadow(
+                        0 0 25px
+                        rgba(0,255,136,0.8)
+                    );
+
+            }
+
+            100% {
+                transform: scale(1);
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="game-screen">
+
+
+    <!-- =========================================
+         GAME AREA
+    ========================================== -->
+
+    <main class="game-area">
+
+
+        <div class="title">
+
+            BAYESIAN
+            <span>RPS</span>
+
+        </div>
+
+
+        <!-- COMPUTER -->
+
+        <section class="computer-section">
+
+            <div class="label">
+
+                COMPUTER
+
+            </div>
+
+
+            <div
+                class="computer-hand"
+                id="computerHand"
+            >
+
+                <div
+                    class="hand-icon"
+                    id="computerIcon"
+                >
+
+                    ❔
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- VS -->
+
+        <div class="vs">
+
+            VS
+
+        </div>
+
+
+        <!-- PLAYER -->
+
+        <section class="player-section">
+
+            <div class="label">
+
+                YOUR MOVE
+
+            </div>
+
+
+            <div class="choices">
+
+
+                <button
+                    class="choice"
+                    onclick="play('rock')"
+                >
+
+                    <div class="choice-icon">
+
+                        ✊
+
+                    </div>
+
+                    <div class="choice-name">
+
+                        ROCK
+
+                    </div>
+
+                </button>
+
+
+                <button
+                    class="choice"
+                    onclick="play('paper')"
+                >
+
+                    <div class="choice-icon">
+
+                        ✋
+
+                    </div>
+
+                    <div class="choice-name">
+
+                        PAPER
+
+                    </div>
+
+                </button>
+
+
+                <button
+                    class="choice"
+                    onclick="play('scissors')"
+                >
+
+                    <div class="choice-icon">
+
+                        ✌️
+
+                    </div>
+
+                    <div class="choice-name">
+
+                        SCISSORS
+
+                    </div>
+
+                </button>
+
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+
+    <!-- =========================================
+         SIDEBAR
+    ========================================== -->
+
+    <aside class="sidebar">
+
+
+        <!-- SCORE -->
+
+        <div class="score-board">
+
+            <div class="score-title">
+
+                SCORE
+
+            </div>
+
+
+            <div class="score-labels">
+
+                <span>YOU</span>
+
+                <span>AI</span>
+
+            </div>
+
+
+            <div class="score-values">
+
+                <span
+                    class="score-number"
+                    id="playerScore"
+                >
+
+                    0
+
+                </span>
+
+
+                <span class="score-divider">
+
+                    :
+
+                </span>
+
+
+                <span
+                    class="score-number"
+                    id="aiScore"
+                >
+
+                    0
+
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- RESET -->
+
+        <button
+            class="side-button"
+            onclick="resetGame()"
+        >
+
+            <div class="side-icon">
+
+                ↻
+
+            </div>
+
+            <div class="side-text">
+
+                RESET
+
+            </div>
+
+        </button>
+
+
+        <!-- DATA VIEW -->
+
+        <button
+            class="side-button"
+            onclick="dataView()"
+        >
+
+            <div class="side-icon">
+
+                ▥
+
+            </div>
+
+            <div class="side-text">
+
+                DATA VIEW
+
+            </div>
+
+        </button>
+
+
+    </aside>
+
+</div>
+
+
+<script>
+
+
+    /* =========================================
+       COMPUTER HAND DISPLAY
+    ========================================= */
+
+    function displayComputerMove(move) {
+
+        const icon =
+            document.getElementById(
+                "computerIcon"
+            );
+
+
+        const hand =
+            document.getElementById(
+                "computerHand"
+            );
+
+
+        hand.classList.remove(
+            "thinking"
+        );
+
+
+        void hand.offsetWidth;
+
+
+        hand.classList.add(
+            "thinking"
+        );
+
+
+        if (move === "rock") {
+
+            icon.textContent = "✊";
+
+        }
+
+        else if (move === "paper") {
+
+            icon.textContent = "✋";
+
+        }
+
+        else {
+
+            icon.textContent = "✌️";
+
+        }
+
+    }
+
+
+    /* =========================================
+       PLAY
+    ========================================= */
+
+    async function play(playerMove) {
+
+        try {
+
+            const response =
+                await fetch(
+                    "/play",
+                    {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            move: playerMove
+                        })
+
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (data.error) {
+
+                console.error(
+                    data.error
+                );
+
+                return;
+
+            }
+
+
+            /* Show computer move */
+
+            displayComputerMove(
+                data.computer
+            );
+
+
+            /* Update score */
+
+            document.getElementById(
+                "playerScore"
+            ).textContent =
+                data.player_score;
+
+
+            document.getElementById(
+                "aiScore"
+            ).textContent =
+                data.ai_score;
+
+
+            console.log(
+                "Round:",
+                data.round
+            );
+
+
+            console.log(
+                "Player:",
+                data.player
+            );
+
+
+            console.log(
+                "Computer:",
+                data.computer
+            );
+
+
+            console.log(
+                "Result:",
+                data.result
+            );
+
+
+            console.log(
+                "Phase:",
+                data.phase
+            );
+
+
+            console.log(
+                "Bayesian probabilities:",
+                data.probabilities
+            );
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Server error:",
+                error
+            );
+
+        }
+
+    }
+
+
+    /* =========================================
+       RESET
+    ========================================= */
+
+    async function resetGame() {
+
+        try {
+
+            await fetch(
+                "/reset",
+                {
+                    method: "POST"
+                }
+            );
+
+
+            document.getElementById(
+                "playerScore"
+            ).textContent = "0";
+
+
+            document.getElementById(
+                "aiScore"
+            ).textContent = "0";
+
+
+            document.getElementById(
+                "computerIcon"
+            ).textContent = "❔";
+
+
+            console.log(
+                "Game reset"
+            );
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Reset error:",
+                error
+            );
+
+        }
+
+    }
+
+
+    /* =========================================
+       DATA VIEW
+    ========================================= */
+
+    function dataView() {
+    window.location.href = "/data-view";
+}
+
+</script>
+
+
+</body>
+
+</html>
+
+
+
